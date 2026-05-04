@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aesthetica · Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root {
+  --bg: #0d0d0f;
+  --bg2: #141417;
+  --bg3: #1c1c21;
+  --border: #2a2a32;
+  --border2: #343440;
+  --text: #f0eff4;
+  --text2: #9896a8;
+  --text3: #5e5d6e;
+  --mty: #4f9cf9;
+  --mcl: #52d68a;
+  --inj: #f97b4f;
+  --fac: #a78bfa;
+  --gold: #f5c842;
+  --red: #f05252;
+  --green: #31c48d;
+  --amber: #f6a623;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); padding: 0; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+.logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+.logo-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: .02em; }
+.logo-sub { font-size: 11px; color: var(--text3); margin-top: 2px; letter-spacing: .08em; text-transform: uppercase; }
+.nav { padding: 16px 0; flex: 1; }
+.nav-section { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); padding: 8px 20px 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 500; transition: all .15s; border-left: 2px solid transparent; }
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.nav-item.active { color: var(--text); background: rgba(79,156,249,.08); border-left-color: var(--mty); }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+.update-badge { font-size: 11px; color: var(--text3); }
+.update-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 5px; }
+
+/* ── MAIN ── */
+.main { flex: 1; overflow: hidden; }
+.page { display: none; padding: 28px 32px; animation: fadeIn .2s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.page-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+
+/* ── MONTH PILL ── */
+.month-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 20px; padding: 4px 10px 4px 4px; margin-bottom: 20px; }
+.month-btn { padding: 4px 10px; border-radius: 16px; border: none; background: none; color: var(--text2); font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .15s; }
+.month-btn.active { background: var(--mty); color: #fff; font-weight: 600; }
+
+/* ── KPI CARDS ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.kpi-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; transition: border-color .2s; }
+.kpi-card:hover { border-color: var(--border2); }
+.kpi-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+.kpi-value { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; line-height: 1; color: var(--text); }
+.kpi-sub { font-size: 12px; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+.kpi-chg { font-weight: 600; }
+.up { color: var(--green); }
+.down { color: var(--red); }
+.neutral { color: var(--text3); }
+.kpi-accent { border-top: 2px solid; padding-top: 16px; margin-top: -2px; }
+.kpi-mty { border-top-color: var(--mty); }
+.kpi-mcl { border-top-color: var(--mcl); }
+
+/* ── SUC SPLIT ── */
+.suc-split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+.suc-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.suc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.suc-name { font-size: 13px; font-weight: 600; }
+.suc-badge { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 500; }
+.badge-mty { background: rgba(79,156,249,.15); color: var(--mty); }
+.badge-mcl { background: rgba(82,214,138,.15); color: var(--mcl); }
+.suc-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.suc-lbl { font-size: 12px; color: var(--text2); }
+.suc-val { font-size: 14px; font-weight: 600; }
+
+/* ── CHARTS ── */
+.charts-row { display: grid; gap: 16px; margin-bottom: 20px; }
+.chart-2 { grid-template-columns: 1fr 1fr; }
+.chart-3 { grid-template-columns: 2fr 1fr; }
+.chart-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.chart-sub { font-size: 11px; color: var(--text3); margin-bottom: 16px; }
+.chart-wrap { position: relative; }
+
+/* ── TABLE ── */
+.table-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
+.table-head { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.table-head-title { font-size: 13px; font-weight: 600; }
+table { width: 100%; border-collapse: collapse; }
+th { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); font-weight: 500; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+td { font-size: 13px; padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+.td-num { text-align: right; font-variant-numeric: tabular-nums; }
+.td-badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 500; }
+.b-mty { background: rgba(79,156,249,.15); color: var(--mty); }
+.b-mcl { background: rgba(82,214,138,.15); color: var(--mcl); }
+.b-inj { background: rgba(249,123,79,.15); color: var(--inj); }
+.b-fac { background: rgba(167,139,250,.15); color: var(--fac); }
+.rank { font-size: 12px; color: var(--text3); width: 28px; font-weight: 600; }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+.tab { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: none; color: var(--text2); font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; font-weight: 500; transition: all .15s; }
+.tab:hover { color: var(--text); border-color: var(--border2); }
+.tab.active { background: var(--mty); color: #fff; border-color: var(--mty); }
+
+/* ── SEMÁFORO ── */
+.semaforo { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.s-green { background: var(--green); }
+.s-amber { background: var(--amber); }
+.s-red { background: var(--red); }
+
+/* ── TERAPEUTA PAGE ── */
+.ter-select { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.ter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text2); font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .15s; font-weight: 500; }
+.ter-btn:hover { border-color: var(--border2); color: var(--text); }
+.ter-btn.active { color: #fff; border-color: transparent; font-weight: 600; }
+.ter-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.ter-kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
+.ter-kpi-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; }
+.ter-kpi-lbl { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── PROGRESS BAR ── */
+.prog-wrap { margin-top: 8px; }
+.prog { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.prog-fill { height: 100%; border-radius: 2px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+/* ── DIARIO ── */
+.diario-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 4px; }
+.diario-cell { background: var(--bg3); border-radius: 6px; padding: 6px; text-align: center; transition: all .15s; cursor: default; }
+.diario-cell:hover { background: var(--border2); }
+.diario-date { font-size: 9px; color: var(--text3); }
+.diario-fact { font-size: 11px; font-weight: 600; margin-top: 2px; }
+.diario-citas { font-size: 9px; color: var(--text2); }
+
+/* tooltip */
+.tooltip-wrap { position: relative; }
+
+/* Pago donut legend */
+.pago-legend { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+.pago-row { display: flex; align-items: center; gap: 8px; }
+.pago-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.pago-lbl { font-size: 12px; color: var(--text2); flex: 1; }
+.pago-pct { font-size: 12px; font-weight: 600; }
+
+@media (max-width: 1100px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-row.chart-3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name">Aesthetica</div>
+    <div class="logo-sub">Panel de Control</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Reportes</div>
+    <div class="nav-item active" onclick="showPage('resumen')"><span class="nav-icon">◈</span> Resumen</div>
+    <div class="nav-item" onclick="showPage('tendencia')"><span class="nav-icon">⟋</span> Tendencia</div>
+    <div class="nav-item" onclick="showPage('sucursales')"><span class="nav-icon">⊡</span> Sucursales</div>
+    <div class="nav-section">Equipo</div>
+    <div class="nav-item" onclick="showPage('terapeutas')"><span class="nav-icon">◎</span> Terapeutas</div>
+    <div class="nav-section">Pacientes</div>
+    <div class="nav-item" onclick="showPage('clientes')"><span class="nav-icon">◈</span> Top Pacientes</div>
+    <div class="nav-item" onclick="showPage('retencion')"><span class="nav-icon">⟳</span> Retención</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="update-badge"><span class="update-dot"></span>Actualizado 4 May 2026</div>
+    <div class="update-badge" style="margin-top:4px;color:#5e5d6e">Datos: May'25 – Abr'26</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ══ RESUMEN ══ -->
+<section class="page active" id="page-resumen">
+  <div class="page-title">Resumen Ejecutivo</div>
+  <div class="page-sub">Abril 2026 · Ambas sucursales</div>
+
+  <div class="kpi-grid" id="kpi-resumen"></div>
+
+  <div class="suc-split" id="suc-split"></div>
+
+  <div class="charts-row chart-3">
+    <div class="chart-box">
+      <div class="chart-title">Facturación mensual</div>
+      <div class="chart-sub">San Pedro vs Monclova · últimos 12 meses</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="chartFact"></canvas></div>
+    </div>
+    <div class="chart-box" style="display:flex;flex-direction:column">
+      <div class="chart-title">Cobros por forma de pago</div>
+      <div class="chart-sub">Abril 2026</div>
+      <div style="flex:1;display:flex;align-items:center;gap:16px;min-height:180px">
+        <div style="width:130px;height:130px;flex-shrink:0"><canvas id="chartPago"></canvas></div>
+        <div class="pago-legend" id="pagoLegend"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-row chart-2">
+    <div class="chart-box">
+      <div class="chart-title">Ticket promedio por tipo de servicio</div>
+      <div class="chart-sub">Inyectables vs Faciales/Aparatología · San Pedro</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chartTicket"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Tasa de inasistencia</div>
+      <div class="chart-sub">% inasistencias + cancelaciones · meta &lt;5%</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chartInasist"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TENDENCIA ══ -->
+<section class="page" id="page-tendencia">
+  <div class="page-title">Tendencia Histórica</div>
+  <div class="page-sub">Últimos 12 meses · Mayo 2025 – Abril 2026</div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTrend('fact',this)">Facturación</button>
+    <button class="tab" onclick="switchTrend('citas',this)">Citas</button>
+    <button class="tab" onclick="switchTrend('ticket',this)">Ticket promedio</button>
+    <button class="tab" onclick="switchTrend('nuevos',this)">Pacientes nuevos</button>
+  </div>
+  <div class="chart-box" style="margin-bottom:20px">
+    <div class="chart-wrap" style="height:300px"><canvas id="chartTrend"></canvas></div>
+  </div>
+
+  <div class="charts-row chart-2">
+    <div class="chart-box">
+      <div class="chart-title">Ticket inyectables vs faciales — San Pedro</div>
+      <div class="chart-sub">Evolución mensual</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="chartTicketTipo"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Facturación diaria — Mar y Abr 2026</div>
+      <div class="chart-sub">San Pedro · calor de días</div>
+      <div id="diarioGrid" style="margin-top:8px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SUCURSALES ══ -->
+<section class="page" id="page-sucursales">
+  <div class="page-title">Comparativo Sucursales</div>
+  <div class="page-sub">San Pedro (Glow) vs Monclova (Vitapiel)</div>
+
+  <div class="charts-row chart-2" style="margin-bottom:20px">
+    <div class="chart-box">
+      <div class="chart-title">Facturación mensual</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartSucFact"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Ticket promedio mensual</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartSucTicket"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-box">
+    <div class="table-head"><span class="table-head-title">Detalle mensual por sucursal</span></div>
+    <div style="overflow-x:auto">
+    <table id="tableSuc">
+      <thead><tr><th>Mes</th><th>Sucursal</th><th class="td-num">Citas</th><th class="td-num">Facturado</th><th class="td-num">Cobrado</th><th class="td-num">Ticket</th><th class="td-num">Saldo</th><th>Estado</th></tr></thead>
+      <tbody id="tableSucBody"></tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TERAPEUTAS ══ -->
+<section class="page" id="page-terapeutas">
+  <div class="page-title">Seguimiento de Equipo</div>
+  <div class="page-sub">Producción mensual por terapeuta</div>
+
+  <div class="ter-select" id="terSelect"></div>
+  <div class="ter-kpis" id="terKpis"></div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTerChart('fact',this)">Facturación</button>
+    <button class="tab" onclick="switchTerChart('citas',this)">Citas</button>
+    <button class="tab" onclick="switchTerChart('ticket',this)">Ticket</button>
+    <button class="tab" onclick="switchTerChart('pacientes',this)">Pacientes únicos</button>
+  </div>
+  <div class="chart-box" style="margin-bottom:20px">
+    <div class="chart-wrap" style="height:260px"><canvas id="chartTer"></canvas></div>
+  </div>
+
+  <div class="table-box">
+    <div class="table-head"><span class="table-head-title" id="terTableTitle">Detalle mensual</span></div>
+    <div style="overflow-x:auto">
+    <table><thead id="terTableHead"></thead><tbody id="terTableBody"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CLIENTES ══ -->
+<section class="page" id="page-clientes">
+  <div class="page-title">Top Pacientes</div>
+  <div class="page-sub">Histórico total de inversión acumulada</div>
+
+  <div class="charts-row chart-3" style="margin-bottom:20px">
+    <div class="chart-box">
+      <div class="chart-title">Top 10 pacientes por facturación total</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartTop"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Distribución de visitas</div>
+      <div class="chart-sub">Top 25 pacientes</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartTopVisitas"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-box">
+    <div class="table-head"><span class="table-head-title">Top 25 Pacientes · Inversión histórica total</span></div>
+    <table><thead><tr><th>#</th><th>Paciente</th><th>Sucursal</th><th class="td-num">Visitas</th><th class="td-num">Total invertido</th><th class="td-num">Ticket promedio</th><th class="td-num">Última visita</th></tr></thead>
+    <tbody id="tableTop"></tbody></table>
+  </div>
+</section>
+
+<!-- ══ RETENCIÓN ══ -->
+<section class="page" id="page-retencion">
+  <div class="page-title">Retención de Pacientes</div>
+  <div class="page-sub">Nuevos vs recurrentes · tasa de inasistencia mensual</div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)" id="kpiRetencion"></div>
+
+  <div class="charts-row chart-2" style="margin-top:20px">
+    <div class="chart-box">
+      <div class="chart-title">Pacientes nuevos vs recurrentes — San Pedro</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartNuevosMty"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Pacientes nuevos vs recurrentes — Monclova</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartNuevosMcl"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-box" style="margin-top:16px">
+    <div class="chart-title">Tasa de inasistencia mensual por sucursal</div>
+    <div class="chart-sub">Verde = bien (&lt;3%) · Amarillo = atención (3-5%) · Rojo = problema (&gt;5%)</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="chartInasistTrend"></canvas></div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+const D = {"summary":{"mty":{"fact":2323120.0,"cobrado":2236950.0,"citas":414,"ticket":5611.0,"saldo":98070.0,"chg":13.0},"mcl":{"fact":217415.0,"cobrado":196365.0,"citas":113,"ticket":1924.0,"saldo":22250.0,"chg":-49.9},"total_fact":2540535.0,"total_citas":527,"chg_total":2.1},"labels12":["May 2025","Jun 2025","Jul 2025","Ago 2025","Sep 2025","Oct 2025","Nov 2025","Dic 2025","Ene 2026","Feb 2026","Mar 2026","Abr 2026"],"meses12":["2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04"],"monthly_total":[{"YearMonth":"2025-05","Citas":288,"Facturado":1810335.0,"Cobrado":1842640.0,"Ticket":6286.0},{"YearMonth":"2025-06","Citas":355,"Facturado":2226805.0,"Cobrado":2140375.0,"Ticket":6273.0},{"YearMonth":"2025-07","Citas":306,"Facturado":1685620.0,"Cobrado":1750520.0,"Ticket":5509.0},{"YearMonth":"2025-08","Citas":338,"Facturado":2033089.0,"Cobrado":2004269.0,"Ticket":6015.0},{"YearMonth":"2025-09","Citas":399,"Facturado":2077155.0,"Cobrado":2067705.0,"Ticket":5206.0},{"YearMonth":"2025-10","Citas":390,"Facturado":2362970.0,"Cobrado":2323455.0,"Ticket":6059.0},{"YearMonth":"2025-11","Citas":358,"Facturado":2017855.0,"Cobrado":1970900.0,"Ticket":5636.0},{"YearMonth":"2025-12","Citas":374,"Facturado":2207525.0,"Cobrado":2430100.0,"Ticket":5902.0},{"YearMonth":"2026-01","Citas":386,"Facturado":2297655.0,"Cobrado":2225420.0,"Ticket":5952.0},{"YearMonth":"2026-02","Citas":437,"Facturado":2182405.0,"Cobrado":2200869.0,"Ticket":4994.0},{"YearMonth":"2026-03","Citas":547,"Facturado":2489528.0,"Cobrado":2422865.0,"Ticket":4551.0},{"YearMonth":"2026-04","Citas":527,"Facturado":2540535.0,"Cobrado":2433315.0,"Ticket":4821.0}],"monthly_suc":[{"YearMonth":"2025-05","Sucursal":"Monclova","Citas":94,"Facturado":294060.0,"Saldo":18055.0,"Cobrado":261405.0,"Ticket":3128.0},{"YearMonth":"2025-05","Sucursal":"Monterrey","Citas":194,"Facturado":1516275.0,"Saldo":-1360.0,"Cobrado":1581235.0,"Ticket":7816.0},{"YearMonth":"2025-06","Sucursal":"Monclova","Citas":96,"Facturado":242250.0,"Saldo":12550.0,"Cobrado":224500.0,"Ticket":2523.0},{"YearMonth":"2025-06","Sucursal":"Monterrey","Citas":259,"Facturado":1984555.0,"Saldo":5000.0,"Cobrado":1915875.0,"Ticket":7662.0},{"YearMonth":"2025-07","Sucursal":"Monclova","Citas":85,"Facturado":207520.0,"Saldo":-800.0,"Cobrado":207520.0,"Ticket":2441.0},{"YearMonth":"2025-07","Sucursal":"Monterrey","Citas":221,"Facturado":1478100.0,"Saldo":5600.0,"Cobrado":1543000.0,"Ticket":6688.0},{"YearMonth":"2025-08","Sucursal":"Monclova","Citas":90,"Facturado":231870.0,"Saldo":11550.0,"Cobrado":255520.0,"Ticket":2576.0},{"YearMonth":"2025-08","Sucursal":"Monterrey","Citas":248,"Facturado":1801219.0,"Saldo":57850.0,"Cobrado":1748749.0,"Ticket":7263.0},{"YearMonth":"2025-09","Sucursal":"Monclova","Citas":140,"Facturado":285730.0,"Saldo":10200.0,"Cobrado":246630.0,"Ticket":2041.0},{"YearMonth":"2025-09","Sucursal":"Monterrey","Citas":259,"Facturado":1791425.0,"Saldo":-16100.0,"Cobrado":1821075.0,"Ticket":6917.0},{"YearMonth":"2025-10","Sucursal":"Monclova","Citas":111,"Facturado":246200.0,"Saldo":1400.0,"Cobrado":244800.0,"Ticket":2218.0},{"YearMonth":"2025-10","Sucursal":"Monterrey","Citas":279,"Facturado":2116770.0,"Saldo":95170.0,"Cobrado":2078655.0,"Ticket":7587.0},{"YearMonth":"2025-11","Sucursal":"Monclova","Citas":119,"Facturado":296940.0,"Saldo":25450.0,"Cobrado":270290.0,"Ticket":2495.0},{"YearMonth":"2025-11","Sucursal":"Monterrey","Citas":239,"Facturado":1720915.0,"Saldo":14300.0,"Cobrado":1700610.0,"Ticket":7200.0},{"YearMonth":"2025-12","Sucursal":"Monclova","Citas":106,"Facturado":293070.0,"Saldo":22780.0,"Cobrado":456120.0,"Ticket":2765.0},{"YearMonth":"2025-12","Sucursal":"Monterrey","Citas":268,"Facturado":1914455.0,"Saldo":5825.0,"Cobrado":1973980.0,"Ticket":7143.0},{"YearMonth":"2026-01","Sucursal":"Monclova","Citas":95,"Facturado":243150.0,"Saldo":18235.0,"Cobrado":224915.0,"Ticket":2559.0},{"YearMonth":"2026-01","Sucursal":"Monterrey","Citas":291,"Facturado":2054505.0,"Saldo":46150.0,"Cobrado":2000505.0,"Ticket":7060.0},{"YearMonth":"2026-02","Sucursal":"Monclova","Citas":102,"Facturado":249740.0,"Saldo":4500.0,"Cobrado":245240.0,"Ticket":2448.0},{"YearMonth":"2026-02","Sucursal":"Monterrey","Citas":335,"Facturado":1932665.0,"Saldo":2636.0,"Cobrado":1955629.0,"Ticket":5769.0},{"YearMonth":"2026-03","Sucursal":"Monclova","Citas":156,"Facturado":434240.0,"Saldo":67800.0,"Cobrado":365240.0,"Ticket":2784.0},{"YearMonth":"2026-03","Sucursal":"Monterrey","Citas":391,"Facturado":2055288.0,"Saldo":-2837.0,"Cobrado":2057625.0,"Ticket":5256.0},{"YearMonth":"2026-04","Sucursal":"Monclova","Citas":113,"Facturado":217415.0,"Saldo":22250.0,"Cobrado":196365.0,"Ticket":1924.0},{"YearMonth":"2026-04","Sucursal":"Monterrey","Citas":414,"Facturado":2323120.0,"Saldo":98070.0,"Cobrado":2236950.0,"Ticket":5611.0}],"ticket_tipo":[{"YearMonth":"2025-05","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":94,"Facturado":294060.0,"Ticket":3128.0},{"YearMonth":"2025-05","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":39,"Facturado":155270.0,"Ticket":3981.0},{"YearMonth":"2025-05","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":155,"Facturado":1361005.0,"Ticket":8781.0},{"YearMonth":"2025-06","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":96,"Facturado":242250.0,"Ticket":2523.0},{"YearMonth":"2025-06","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":41,"Facturado":214080.0,"Ticket":5221.0},{"YearMonth":"2025-06","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":218,"Facturado":1770475.0,"Ticket":8121.0},{"YearMonth":"2025-07","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":85,"Facturado":207520.0,"Ticket":2441.0},{"YearMonth":"2025-07","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":75,"Facturado":326055.0,"Ticket":4347.0},{"YearMonth":"2025-07","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":146,"Facturado":1152045.0,"Ticket":7891.0},{"YearMonth":"2025-08","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":90,"Facturado":231870.0,"Ticket":2576.0},{"YearMonth":"2025-08","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":68,"Facturado":320329.0,"Ticket":4711.0},{"YearMonth":"2025-08","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":180,"Facturado":1480890.0,"Ticket":8227.0},{"YearMonth":"2025-09","Sucursal":"Monclova","TipoServicio":"Faciales/Aparatología","Citas":1,"Facturado":28900.0,"Ticket":28900.0},{"YearMonth":"2025-09","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":139,"Facturado":256830.0,"Ticket":1848.0},{"YearMonth":"2025-09","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":57,"Facturado":223230.0,"Ticket":3916.0},{"YearMonth":"2025-09","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":202,"Facturado":1568195.0,"Ticket":7763.0},{"YearMonth":"2025-10","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":111,"Facturado":246200.0,"Ticket":2218.0},{"YearMonth":"2025-10","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":65,"Facturado":273280.0,"Ticket":4204.0},{"YearMonth":"2025-10","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":214,"Facturado":1843490.0,"Ticket":8614.0},{"YearMonth":"2025-11","Sucursal":"Monclova","TipoServicio":"Faciales/Aparatología","Citas":13,"Facturado":25100.0,"Ticket":1931.0},{"YearMonth":"2025-11","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":106,"Facturado":271840.0,"Ticket":2565.0},{"YearMonth":"2025-11","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":59,"Facturado":215065.0,"Ticket":3645.0},{"YearMonth":"2025-11","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":180,"Facturado":1505850.0,"Ticket":8366.0},{"YearMonth":"2025-12","Sucursal":"Monclova","TipoServicio":"Faciales/Aparatología","Citas":47,"Facturado":100340.0,"Ticket":2135.0},{"YearMonth":"2025-12","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":59,"Facturado":192730.0,"Ticket":3267.0},{"YearMonth":"2025-12","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":73,"Facturado":231180.0,"Ticket":3167.0},{"YearMonth":"2025-12","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":195,"Facturado":1683275.0,"Ticket":8632.0},{"YearMonth":"2026-01","Sucursal":"Monclova","TipoServicio":"Faciales/Aparatología","Citas":27,"Facturado":39750.0,"Ticket":1472.0},{"YearMonth":"2026-01","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":68,"Facturado":203400.0,"Ticket":2991.0},{"YearMonth":"2026-01","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":98,"Facturado":367960.0,"Ticket":3755.0},{"YearMonth":"2026-01","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":193,"Facturado":1686545.0,"Ticket":8739.0},{"YearMonth":"2026-02","Sucursal":"Monclova","TipoServicio":"Faciales/Aparatología","Citas":27,"Facturado":43640.0,"Ticket":1616.0},{"YearMonth":"2026-02","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":75,"Facturado":206100.0,"Ticket":2748.0},{"YearMonth":"2026-02","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":137,"Facturado":375060.0,"Ticket":2738.0},{"YearMonth":"2026-02","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":198,"Facturado":1557605.0,"Ticket":7867.0},{"YearMonth":"2026-03","Sucursal":"Monclova","TipoServicio":"Faciales/Aparatología","Citas":42,"Facturado":47000.0,"Ticket":1119.0},{"YearMonth":"2026-03","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":114,"Facturado":387240.0,"Ticket":3397.0},{"YearMonth":"2026-03","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":213,"Facturado":789723.0,"Ticket":3708.0},{"YearMonth":"2026-03","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":178,"Facturado":1265565.0,"Ticket":7110.0},{"YearMonth":"2026-04","Sucursal":"Monclova","TipoServicio":"Faciales/Aparatología","Citas":37,"Facturado":48440.0,"Ticket":1309.0},{"YearMonth":"2026-04","Sucursal":"Monclova","TipoServicio":"Inyectables","Citas":76,"Facturado":168975.0,"Ticket":2223.0},{"YearMonth":"2026-04","Sucursal":"Monterrey","TipoServicio":"Faciales/Aparatología","Citas":231,"Facturado":773310.0,"Ticket":3347.0},{"YearMonth":"2026-04","Sucursal":"Monterrey","TipoServicio":"Inyectables","Citas":183,"Facturado":1549810.0,"Ticket":8469.0}],"nuevos":[{"YearMonth":"2025-05","Sucursal":"Monclova","Nuevos":17,"Total":94,"Recurrentes":77,"Pct_Nuevos":18.1},{"YearMonth":"2025-05","Sucursal":"Monterrey","Nuevos":45,"Total":194,"Recurrentes":149,"Pct_Nuevos":23.2},{"YearMonth":"2025-06","Sucursal":"Monclova","Nuevos":8,"Total":96,"Recurrentes":88,"Pct_Nuevos":8.3},{"YearMonth":"2025-06","Sucursal":"Monterrey","Nuevos":33,"Total":259,"Recurrentes":226,"Pct_Nuevos":12.7},{"YearMonth":"2025-07","Sucursal":"Monclova","Nuevos":21,"Total":85,"Recurrentes":64,"Pct_Nuevos":24.7},{"YearMonth":"2025-07","Sucursal":"Monterrey","Nuevos":24,"Total":221,"Recurrentes":197,"Pct_Nuevos":10.9},{"YearMonth":"2025-08","Sucursal":"Monclova","Nuevos":13,"Total":90,"Recurrentes":77,"Pct_Nuevos":14.4},{"YearMonth":"2025-08","Sucursal":"Monterrey","Nuevos":33,"Total":248,"Recurrentes":215,"Pct_Nuevos":13.3},{"YearMonth":"2025-09","Sucursal":"Monclova","Nuevos":17,"Total":140,"Recurrentes":123,"Pct_Nuevos":12.1},{"YearMonth":"2025-09","Sucursal":"Monterrey","Nuevos":46,"Total":259,"Recurrentes":213,"Pct_Nuevos":17.8},{"YearMonth":"2025-10","Sucursal":"Monclova","Nuevos":26,"Total":111,"Recurrentes":85,"Pct_Nuevos":23.4},{"YearMonth":"2025-10","Sucursal":"Monterrey","Nuevos":43,"Total":279,"Recurrentes":236,"Pct_Nuevos":15.4},{"YearMonth":"2025-11","Sucursal":"Monclova","Nuevos":23,"Total":119,"Recurrentes":96,"Pct_Nuevos":19.3},{"YearMonth":"2025-11","Sucursal":"Monterrey","Nuevos":37,"Total":239,"Recurrentes":202,"Pct_Nuevos":15.5},{"YearMonth":"2025-12","Sucursal":"Monclova","Nuevos":19,"Total":106,"Recurrentes":87,"Pct_Nuevos":17.9},{"YearMonth":"2025-12","Sucursal":"Monterrey","Nuevos":37,"Total":268,"Recurrentes":231,"Pct_Nuevos":13.8},{"YearMonth":"2026-01","Sucursal":"Monclova","Nuevos":18,"Total":95,"Recurrentes":77,"Pct_Nuevos":18.9},{"YearMonth":"2026-01","Sucursal":"Monterrey","Nuevos":45,"Total":291,"Recurrentes":246,"Pct_Nuevos":15.5},{"YearMonth":"2026-02","Sucursal":"Monclova","Nuevos":18,"Total":102,"Recurrentes":84,"Pct_Nuevos":17.6},{"YearMonth":"2026-02","Sucursal":"Monterrey","Nuevos":53,"Total":335,"Recurrentes":282,"Pct_Nuevos":15.8},{"YearMonth":"2026-03","Sucursal":"Monclova","Nuevos":16,"Total":156,"Recurrentes":140,"Pct_Nuevos":10.3},{"YearMonth":"2026-03","Sucursal":"Monterrey","Nuevos":56,"Total":391,"Recurrentes":335,"Pct_Nuevos":14.3},{"YearMonth":"2026-04","Sucursal":"Monclova","Nuevos":13,"Total":113,"Recurrentes":100,"Pct_Nuevos":11.5},{"YearMonth":"2026-04","Sucursal":"Monterrey","Nuevos":64,"Total":414,"Recurrentes":350,"Pct_Nuevos":15.5}],"inasist":[{"YearMonth":"2025-05","Sucursal":"Monclova","NoReal":4,"Total":98,"Tasa":4.1},{"YearMonth":"2025-05","Sucursal":"Monterrey","NoReal":9,"Total":203,"Tasa":4.4},{"YearMonth":"2025-06","Sucursal":"Monclova","NoReal":0,"Total":96,"Tasa":0.0},{"YearMonth":"2025-06","Sucursal":"Monterrey","NoReal":6,"Total":265,"Tasa":2.3},{"YearMonth":"2025-07","Sucursal":"Monclova","NoReal":1,"Total":86,"Tasa":1.2},{"YearMonth":"2025-07","Sucursal":"Monterrey","NoReal":5,"Total":226,"Tasa":2.2},{"YearMonth":"2025-08","Sucursal":"Monclova","NoReal":1,"Total":91,"Tasa":1.1},{"YearMonth":"2025-08","Sucursal":"Monterrey","NoReal":5,"Total":253,"Tasa":2.0},{"YearMonth":"2025-09","Sucursal":"Monclova","NoReal":2,"Total":142,"Tasa":1.4},{"YearMonth":"2025-09","Sucursal":"Monterrey","NoReal":6,"Total":265,"Tasa":2.3},{"YearMonth":"2025-10","Sucursal":"Monclova","NoReal":6,"Total":117,"Tasa":5.1},{"YearMonth":"2025-10","Sucursal":"Monterrey","NoReal":8,"Total":287,"Tasa":2.8},{"YearMonth":"2025-11","Sucursal":"Monclova","NoReal":2,"Total":121,"Tasa":1.7},{"YearMonth":"2025-11","Sucursal":"Monterrey","NoReal":10,"Total":249,"Tasa":4.0},{"YearMonth":"2025-12","Sucursal":"Monclova","NoReal":4,"Total":110,"Tasa":3.6},{"YearMonth":"2025-12","Sucursal":"Monterrey","NoReal":6,"Total":274,"Tasa":2.2},{"YearMonth":"2026-01","Sucursal":"Monclova","NoReal":4,"Total":99,"Tasa":4.0},{"YearMonth":"2026-01","Sucursal":"Monterrey","NoReal":10,"Total":301,"Tasa":3.3},{"YearMonth":"2026-02","Sucursal":"Monclova","NoReal":4,"Total":106,"Tasa":3.8},{"YearMonth":"2026-02","Sucursal":"Monterrey","NoReal":15,"Total":350,"Tasa":4.3},{"YearMonth":"2026-03","Sucursal":"Monclova","NoReal":0,"Total":156,"Tasa":0.0},{"YearMonth":"2026-03","Sucursal":"Monterrey","NoReal":7,"Total":398,"Tasa":1.8},{"YearMonth":"2026-04","Sucursal":"Monclova","NoReal":7,"Total":120,"Tasa":5.8},{"YearMonth":"2026-04","Sucursal":"Monterrey","NoReal":17,"Total":431,"Tasa":3.9}],"ter_mes":[{"YearMonth":"2025-05","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":155,"Facturado":1361005.0,"Pacientes":135,"Ticket":8781.0},{"YearMonth":"2025-05","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":26,"Facturado":83590.0,"Pacientes":26,"Ticket":3215.0},{"YearMonth":"2025-05","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":7,"Facturado":38640.0,"Pacientes":7,"Ticket":5520.0},{"YearMonth":"2025-05","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":6,"Facturado":33040.0,"Pacientes":6,"Ticket":5507.0},{"YearMonth":"2025-05","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":94,"Facturado":294060.0,"Pacientes":76,"Ticket":3128.0},{"YearMonth":"2025-06","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":218,"Facturado":1770475.0,"Pacientes":187,"Ticket":8121.0},{"YearMonth":"2025-06","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":30,"Facturado":145330.0,"Pacientes":29,"Ticket":4844.0},{"YearMonth":"2025-06","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":5,"Facturado":31750.0,"Pacientes":5,"Ticket":6350.0},{"YearMonth":"2025-06","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":6,"Facturado":37000.0,"Pacientes":6,"Ticket":6167.0},{"YearMonth":"2025-06","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":96,"Facturado":242250.0,"Pacientes":83,"Ticket":2523.0},{"YearMonth":"2025-07","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":146,"Facturado":1152045.0,"Pacientes":126,"Ticket":7891.0},{"YearMonth":"2025-07","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":55,"Facturado":218995.0,"Pacientes":50,"Ticket":3982.0},{"YearMonth":"2025-07","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":14,"Facturado":61560.0,"Pacientes":14,"Ticket":4397.0},{"YearMonth":"2025-07","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":6,"Facturado":45500.0,"Pacientes":6,"Ticket":7583.0},{"YearMonth":"2025-07","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":85,"Facturado":207520.0,"Pacientes":71,"Ticket":2441.0},{"YearMonth":"2025-08","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":180,"Facturado":1480890.0,"Pacientes":157,"Ticket":8227.0},{"YearMonth":"2025-08","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":52,"Facturado":224329.0,"Pacientes":46,"Ticket":4314.0},{"YearMonth":"2025-08","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":10,"Facturado":49500.0,"Pacientes":10,"Ticket":4950.0},{"YearMonth":"2025-08","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":6,"Facturado":46500.0,"Pacientes":6,"Ticket":7750.0},{"YearMonth":"2025-08","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":90,"Facturado":231870.0,"Pacientes":78,"Ticket":2576.0},{"YearMonth":"2025-09","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":202,"Facturado":1568195.0,"Pacientes":174,"Ticket":7763.0},{"YearMonth":"2025-09","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":47,"Facturado":178230.0,"Pacientes":42,"Ticket":3792.0},{"YearMonth":"2025-09","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":8,"Facturado":44500.0,"Pacientes":8,"Ticket":5563.0},{"YearMonth":"2025-09","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":2,"Facturado":500.0,"Pacientes":2,"Ticket":250.0},{"YearMonth":"2025-09","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":139,"Facturado":256830.0,"Pacientes":113,"Ticket":1848.0},{"YearMonth":"2025-10","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":214,"Facturado":1843490.0,"Pacientes":184,"Ticket":8614.0},{"YearMonth":"2025-10","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":55,"Facturado":217680.0,"Pacientes":47,"Ticket":3958.0},{"YearMonth":"2025-10","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":8,"Facturado":46000.0,"Pacientes":8,"Ticket":5750.0},{"YearMonth":"2025-10","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":2,"Facturado":9600.0,"Pacientes":2,"Ticket":4800.0},{"YearMonth":"2025-10","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":111,"Facturado":246200.0,"Pacientes":87,"Ticket":2218.0},{"YearMonth":"2025-11","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":180,"Facturado":1505850.0,"Pacientes":159,"Ticket":8366.0},{"YearMonth":"2025-11","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":58,"Facturado":189965.0,"Pacientes":49,"Ticket":3275.0},{"YearMonth":"2025-11","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":1,"Facturado":500.0,"Pacientes":1,"Ticket":500.0},{"YearMonth":"2025-11","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":0,"Facturado":0.0,"Pacientes":0,"Ticket":0.0},{"YearMonth":"2025-11","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":106,"Facturado":271840.0,"Pacientes":88,"Ticket":2565.0},{"YearMonth":"2025-11","Sucursal":"Monclova","Terapeuta":"Lic. Alicia Castañeda Valdez","TipoServicio":"Faciales/Aparatología","Citas":13,"Facturado":25100.0,"Pacientes":11,"Ticket":1931.0},{"YearMonth":"2025-12","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":195,"Facturado":1683275.0,"Pacientes":170,"Ticket":8632.0},{"YearMonth":"2025-12","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":65,"Facturado":218980.0,"Pacientes":52,"Ticket":3369.0},{"YearMonth":"2025-12","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":8,"Facturado":12200.0,"Pacientes":8,"Ticket":1525.0},{"YearMonth":"2025-12","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":0,"Facturado":0.0,"Pacientes":0,"Ticket":0.0},{"YearMonth":"2025-12","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":59,"Facturado":192730.0,"Pacientes":51,"Ticket":3267.0},{"YearMonth":"2025-12","Sucursal":"Monclova","Terapeuta":"Lic. Alicia Castañeda Valdez","TipoServicio":"Faciales/Aparatología","Citas":47,"Facturado":100340.0,"Pacientes":38,"Ticket":2135.0},{"YearMonth":"2026-01","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":191,"Facturado":1685045.0,"Pacientes":165,"Ticket":8822.0},{"YearMonth":"2026-01","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":85,"Facturado":315760.0,"Pacientes":73,"Ticket":3715.0},{"YearMonth":"2026-01","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":9,"Facturado":46200.0,"Pacientes":9,"Ticket":5133.0},{"YearMonth":"2026-01","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":6,"Facturado":6000.0,"Pacientes":6,"Ticket":1000.0},{"YearMonth":"2026-01","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":68,"Facturado":203400.0,"Pacientes":57,"Ticket":2991.0},{"YearMonth":"2026-01","Sucursal":"Monclova","Terapeuta":"Lic. Alicia Castañeda Valdez","TipoServicio":"Faciales/Aparatología","Citas":27,"Facturado":39750.0,"Pacientes":22,"Ticket":1472.0},{"YearMonth":"2026-02","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":194,"Facturado":1555605.0,"Pacientes":172,"Ticket":8019.0},{"YearMonth":"2026-02","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":109,"Facturado":340760.0,"Pacientes":91,"Ticket":3126.0},{"YearMonth":"2026-02","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":22,"Facturado":30300.0,"Pacientes":20,"Ticket":1377.0},{"YearMonth":"2026-02","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":10,"Facturado":4000.0,"Pacientes":9,"Ticket":400.0},{"YearMonth":"2026-02","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":75,"Facturado":206100.0,"Pacientes":64,"Ticket":2748.0},{"YearMonth":"2026-02","Sucursal":"Monclova","Terapeuta":"Lic. Alicia Castañeda Valdez","TipoServicio":"Faciales/Aparatología","Citas":27,"Facturado":43640.0,"Pacientes":23,"Ticket":1616.0},{"YearMonth":"2026-03","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":170,"Facturado":1254565.0,"Pacientes":140,"Ticket":7380.0},{"YearMonth":"2026-03","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":124,"Facturado":440823.0,"Pacientes":104,"Ticket":3555.0},{"YearMonth":"2026-03","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":75,"Facturado":259400.0,"Pacientes":55,"Ticket":3459.0},{"YearMonth":"2026-03","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":14,"Facturado":89300.0,"Pacientes":12,"Ticket":6379.0},{"YearMonth":"2026-03","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":114,"Facturado":387240.0,"Pacientes":95,"Ticket":3397.0},{"YearMonth":"2026-03","Sucursal":"Monclova","Terapeuta":"Lic. Alicia Castañeda Valdez","TipoServicio":"Faciales/Aparatología","Citas":42,"Facturado":47000.0,"Pacientes":35,"Ticket":1119.0},{"YearMonth":"2026-04","Sucursal":"Monterrey","Terapeuta":"Dra. Maria Angeles Hernandez","TipoServicio":"Inyectables","Citas":180,"Facturado":1541470.0,"Pacientes":156,"Ticket":8564.0},{"YearMonth":"2026-04","Sucursal":"Monterrey","Terapeuta":"Lic. Karina Salas","TipoServicio":"Faciales/Aparatología","Citas":86,"Facturado":323910.0,"Pacientes":74,"Ticket":3766.0},{"YearMonth":"2026-04","Sucursal":"Monterrey","Terapeuta":"Lic Lidia Hernandez","TipoServicio":"Faciales/Aparatología","Citas":65,"Facturado":189560.0,"Pacientes":47,"Ticket":2916.0},{"YearMonth":"2026-04","Sucursal":"Monterrey","Terapeuta":"Lic. Stephania Ramirez","TipoServicio":"Faciales/Aparatología","Citas":55,"Facturado":181910.0,"Pacientes":47,"Ticket":3307.0},{"YearMonth":"2026-04","Sucursal":"Monclova","Terapeuta":"Dra. Brenda Paredes","TipoServicio":"Inyectables","Citas":76,"Facturado":168975.0,"Pacientes":66,"Ticket":2223.0},{"YearMonth":"2026-04","Sucursal":"Monclova","Terapeuta":"Lic. Alicia Castañeda Valdez","TipoServicio":"Faciales/Aparatología","Citas":37,"Facturado":48440.0,"Pacientes":31,"Ticket":1309.0}],"top":[{"Cliente":"Karla Guerra","Sucursal":"Monterrey","Visitas":64,"Total":1251340.0,"UltimaVisita":"21/04/2026"},{"Cliente":"Yisely Gonzalez Loya","Sucursal":"Monterrey","Visitas":51,"Total":737810.0,"UltimaVisita":"16/04/2026"},{"Cliente":"Ana Maria Gonzalez Cantu","Sucursal":"Monterrey","Visitas":62,"Total":693430.0,"UltimaVisita":"28/04/2026"},{"Cliente":"Carlos Murillo","Sucursal":"Monterrey","Visitas":21,"Total":483350.0,"UltimaVisita":"02/04/2026"},{"Cliente":"Hernan Javier Zambrano Garza","Sucursal":"Monterrey","Visitas":39,"Total":383950.0,"UltimaVisita":"30/04/2026"},{"Cliente":"Joana Castro Medina","Sucursal":"Monterrey","Visitas":32,"Total":335290.0,"UltimaVisita":"30/04/2026"},{"Cliente":"Miriam Loya","Sucursal":"Monterrey","Visitas":33,"Total":328460.0,"UltimaVisita":"18/04/2026"},{"Cliente":"Ana Maria Zamabrano Gonzalez","Sucursal":"Monterrey","Visitas":41,"Total":304675.0,"UltimaVisita":"18/04/2026"},{"Cliente":"Josefa Galindo Garza","Sucursal":"Monterrey","Visitas":35,"Total":274280.0,"UltimaVisita":"28/04/2026"},{"Cliente":"Adriana Garza Ballesteros","Sucursal":"Monterrey","Visitas":41,"Total":268825.0,"UltimaVisita":"13/04/2026"},{"Cliente":"Rosy Druker","Sucursal":"Monterrey","Visitas":15,"Total":256300.0,"UltimaVisita":"11/04/2026"},{"Cliente":"Norma Elizalde","Sucursal":"Monterrey","Visitas":29,"Total":238000.0,"UltimaVisita":"09/04/2026"},{"Cliente":"Monica Rivas Siller","Sucursal":"Monterrey","Visitas":18,"Total":237930.0,"UltimaVisita":"30/04/2026"},{"Cliente":"Ada Guerra","Sucursal":"Monterrey","Visitas":22,"Total":228500.0,"UltimaVisita":"25/10/2025"},{"Cliente":"Emilce Martinez","Sucursal":"Monterrey","Visitas":25,"Total":212100.0,"UltimaVisita":"22/09/2025"},{"Cliente":"Delia Adriana De Anda Muñoz","Sucursal":"Monterrey","Visitas":15,"Total":208820.0,"UltimaVisita":"25/04/2026"},{"Cliente":"Vivian Morales","Sucursal":"Monterrey","Visitas":29,"Total":206900.0,"UltimaVisita":"02/04/2026"},{"Cliente":"Alejandra Rodriguez Garza","Sucursal":"Monterrey","Visitas":22,"Total":197040.0,"UltimaVisita":"04/04/2026"},{"Cliente":"Lety Meza","Sucursal":"Monterrey","Visitas":17,"Total":190670.0,"UltimaVisita":"28/04/2026"},{"Cliente":"Graciela Dena","Sucursal":"Monterrey","Visitas":12,"Total":187700.0,"UltimaVisita":"14/04/2026"},{"Cliente":"Maru Cuellar","Sucursal":"Monterrey","Visitas":19,"Total":183820.0,"UltimaVisita":"11/04/2026"},{"Cliente":"Yessica Lizbeth Guzman Salazar","Sucursal":"Monterrey","Visitas":14,"Total":175980.0,"UltimaVisita":"30/04/2026"},{"Cliente":"Brenda Treviño","Sucursal":"Monterrey","Visitas":24,"Total":174460.0,"UltimaVisita":"11/04/2026"},{"Cliente":"Susana Sanchez","Sucursal":"Monterrey","Visitas":25,"Total":173080.0,"UltimaVisita":"24/04/2026"},{"Cliente":"Susana Treviño","Sucursal":"Monterrey","Visitas":34,"Total":166680.0,"UltimaVisita":"29/04/2026"}],"pago_mes":[{"YearMonth":"2025-05","Forma de pago":"Efectivo","Importe":406570.0},{"YearMonth":"2025-05","Forma de pago":"Tarjeta de crédito","Importe":932820.0},{"YearMonth":"2025-05","Forma de pago":"Tarjeta de debito","Importe":406780.0},{"YearMonth":"2025-05","Forma de pago":"Tranferencia","Importe":96470.0},{"YearMonth":"2025-06","Forma de pago":"Efectivo","Importe":562630.0},{"YearMonth":"2025-06","Forma de pago":"Tarjeta de crédito","Importe":1078855.0},{"YearMonth":"2025-06","Forma de pago":"Tarjeta de debito","Importe":378570.0},{"YearMonth":"2025-06","Forma de pago":"Tranferencia","Importe":120320.0},{"YearMonth":"2025-07","Forma de pago":"Efectivo","Importe":422280.0},{"YearMonth":"2025-07","Forma de pago":"Tarjeta de crédito","Importe":878970.0},{"YearMonth":"2025-07","Forma de pago":"Tarjeta de debito","Importe":360990.0},{"YearMonth":"2025-07","Forma de pago":"Tranferencia","Importe":88280.0},{"YearMonth":"2025-08","Forma de pago":"Efectivo","Importe":481030.0},{"YearMonth":"2025-08","Forma de pago":"Tarjeta de crédito","Importe":1020619.0},{"YearMonth":"2025-08","Forma de pago":"Tarjeta de debito","Importe":395120.0},{"YearMonth":"2025-08","Forma de pago":"Tranferencia","Importe":107500.0},{"YearMonth":"2025-09","Forma de pago":"Efectivo","Importe":524270.0},{"YearMonth":"2025-09","Forma de pago":"Tarjeta de crédito","Importe":1034295.0},{"YearMonth":"2025-09","Forma de pago":"Tarjeta de debito","Importe":408300.0},{"YearMonth":"2025-09","Forma de pago":"Tranferencia","Importe":100840.0},{"YearMonth":"2025-10","Forma de pago":"Efectivo","Importe":575680.0},{"YearMonth":"2025-10","Forma de pago":"Tarjeta de crédito","Importe":1205775.0},{"YearMonth":"2025-10","Forma de pago":"Tarjeta de debito","Importe":432900.0},{"YearMonth":"2025-10","Forma de pago":"Tranferencia","Importe":109100.0},{"YearMonth":"2025-11","Forma de pago":"Efectivo","Importe":523570.0},{"YearMonth":"2025-11","Forma de pago":"Tarjeta de crédito","Importe":961380.0},{"YearMonth":"2025-11","Forma de pago":"Tarjeta de debito","Importe":368050.0},{"YearMonth":"2025-11","Forma de pago":"Tranferencia","Importe":117900.0},{"YearMonth":"2025-12","Forma de pago":"Efectivo","Importe":604400.0},{"YearMonth":"2025-12","Forma de pago":"Tarjeta de crédito","Importe":1291250.0},{"YearMonth":"2025-12","Forma de pago":"Tarjeta de debito","Importe":416090.0},{"YearMonth":"2025-12","Forma de pago":"Tranferencia","Importe":118360.0},{"YearMonth":"2026-01","Forma de pago":"Efectivo","Importe":544640.0},{"YearMonth":"2026-01","Forma de pago":"Tarjeta de crédito","Importe":1134180.0},{"YearMonth":"2026-01","Forma de pago":"Tarjeta de debito","Importe":433100.0},{"YearMonth":"2026-01","Forma de pago":"Tranferencia","Importe":113500.0},{"YearMonth":"2026-02","Forma de pago":"Efectivo","Importe":556299.0},{"YearMonth":"2026-02","Forma de pago":"Tarjeta de crédito","Importe":1108220.0},{"YearMonth":"2026-02","Forma de pago":"Tarjeta de debito","Importe":420850.0},{"YearMonth":"2026-02","Forma de pago":"Tranferencia","Importe":115500.0},{"YearMonth":"2026-03","Forma de pago":"Efectivo","Importe":647310.0},{"YearMonth":"2026-03","Forma de pago":"Tarjeta de crédito","Importe":1220555.0},{"YearMonth":"2026-03","Forma de pago":"Tarjeta de debito","Importe":428300.0},{"YearMonth":"2026-03","Forma de pago":"Tranferencia","Importe":126700.0},{"YearMonth":"2026-04","Forma de pago":"Efectivo","Importe":700030.0},{"YearMonth":"2026-04","Forma de pago":"Tarjeta de crédito","Importe":1234400.0},{"YearMonth":"2026-04","Forma de pago":"Tarjeta de debito","Importe":369770.0},{"YearMonth":"2026-04","Forma de pago":"Tranferencia","Importe":129115.0}]};
+
+const LABELS = D.labels12;
+const MESES = D.meses12;
+const C = { mty:'#4f9cf9', mcl:'#52d68a', inj:'#f97b4f', fac:'#a78bfa', gold:'#f5c842', red:'#f05252', green:'#31c48d', amber:'#f6a623', text:'#9896a8' };
+const chartInstances = {};
+
+function fmt(v){ if(!v) return '—'; if(v>=1000000) return '$'+(v/1000000).toFixed(2)+'M'; if(v>=1000) return '$'+(v/1000).toFixed(0)+'K'; return '$'+Math.round(v).toLocaleString('es-MX'); }
+function fmtFull(v){ return '$'+Math.round(v).toLocaleString('es-MX'); }
+function pct(v){ return (v>0?'+':'')+v+'%'; }
+
+// ── METAS ──
+const METAS = {
+  inasistencia: 5,          // % máximo inasistencia
+  pct_nuevos: 15,           // % mínimo pacientes nuevos
+  ticket_inj_mty: 8000,    // $ ticket inyectables MTY
+  ticket_fac_mty: 3500,    // $ ticket faciales MTY
+  ticket_inj_mcl: 2500,    // $ ticket inyectables MCL
+  cobro: 95,               // % mínimo cobrado vs facturado
+};
+
+const chartDefaults = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: { backgroundColor: '#1c1c21', borderColor: '#343440', borderWidth: 1, titleColor: '#f0eff4', bodyColor: '#9896a8', padding: 10, callbacks: {} },
+    datalabels: { display: false }  // off by default, habilitamos por gráfica
+  },
+  scales: {
+    x: { ticks: { color: C.text, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,.04)' }, border: { display: false } },
+    y: { ticks: { color: C.text, font: { size: 11 } }, grid: { color: 'rgba(255,255,255,.06)' }, border: { display: false } }
+  }
+};
+
+// Plugin de línea de meta manual (más confiable que annotation)
+const metaLinePlugin = {
+  id: 'metaLine',
+  afterDraw(chart) {
+    const metas = chart.options.metaLines;
+    if (!metas || !metas.length) return;
+    const ctx = chart.ctx;
+    const yAxis = chart.scales['y'];
+    if (!yAxis) return;
+    metas.forEach(m => {
+      const yPixel = yAxis.getPixelForValue(m.value);
+      if (yPixel < yAxis.top || yPixel > yAxis.bottom) return;
+      ctx.save();
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = m.color || '#f6a623';
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(chart.chartArea.left, yPixel);
+      ctx.lineTo(chart.chartArea.right, yPixel);
+      ctx.stroke();
+      // Etiqueta
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = m.color || '#f6a623';
+      ctx.font = 'bold 10px DM Sans, sans-serif';
+      ctx.textAlign = 'left';
+      const lbl = m.label || `Meta ${m.value}`;
+      const tw = ctx.measureText(lbl).width;
+      ctx.fillStyle = m.color+'33' || '#f6a62333';
+      ctx.fillRect(chart.chartArea.right - tw - 14, yPixel - 14, tw + 10, 16);
+      ctx.fillStyle = m.color || '#f6a623';
+      ctx.fillText(lbl, chart.chartArea.right - tw - 9, yPixel - 3);
+      ctx.restore();
+    });
+  }
+};
+Chart.register(metaLinePlugin);
+
+// Helper: config de datalabels para líneas
+function dlLine(fmt, color, offset = -10) {
+  return {
+    display: true,
+    color: color || 'rgba(240,239,244,0.75)',
+    font: { size: 10, weight: '600', family: 'DM Sans, sans-serif' },
+    formatter: fmt,
+    anchor: 'top',
+    align: 'top',
+    offset: offset,
+    padding: 2,
+    backgroundColor: 'rgba(13,13,15,0.65)',
+    borderRadius: 3,
+  };
+}
+
+// Helper: config de datalabels para barras (encima)
+function dlBar(fmt, color) {
+  return {
+    display: true,
+    color: color || 'rgba(240,239,244,0.7)',
+    font: { size: 9, weight: '600', family: 'DM Sans, sans-serif' },
+    formatter: fmt,
+    anchor: 'end',
+    align: 'end',
+    offset: 2,
+    padding: 2,
+  };
+}
+
+function mkChart(id, type, data, opts) {
+  if(chartInstances[id]) chartInstances[id].destroy();
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  chartInstances[id] = new Chart(ctx, { type, data, options: { ...chartDefaults, ...opts } });
+  return chartInstances[id];
+}
+
+function getSuc(suc, col, ym) {
+  const r = D.monthly_suc.find(x => x.YearMonth === ym && x.Sucursal === suc);
+  return r ? r[col] : 0;
+}
+function getInasist(suc, ym) {
+  const r = D.inasist.find(x => x.YearMonth === ym && x.Sucursal === suc);
+  return r ? r.Tasa : 0;
+}
+function getNuevos(suc, col, ym) {
+  const r = D.nuevos.find(x => x.YearMonth === ym && x.Sucursal === suc);
+  return r ? r[col] : 0;
+}
+function getTicketTipo(suc, tipo, ym) {
+  const r = D.ticket_tipo.find(x => x.YearMonth === ym && x.Sucursal === suc && x.TipoServicio === tipo);
+  return r ? r.Ticket : null;
+}
+function getTer(ter, col, ym) {
+  const r = D.ter_mes.find(x => x.YearMonth === ym && x.Terapeuta === ter);
+  return r ? r[col] : 0;
+}
+
+// ══ PÁGINA: RESUMEN ══
+function initResumen() {
+  const s = D.summary;
+  document.getElementById('kpi-resumen').innerHTML = `
+    <div class="kpi-card kpi-accent kpi-mty">
+      <div class="kpi-label">Facturación Total</div>
+      <div class="kpi-value">${fmt(s.total_fact)}</div>
+      <div class="kpi-sub"><span class="kpi-chg ${s.chg_total>0?'up':'down'}">${pct(s.chg_total)} vs Mar</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Citas Realizadas</div>
+      <div class="kpi-value">${s.total_citas}</div>
+      <div class="kpi-sub neutral">Abr 2026</div>
+    </div>
+    <div class="kpi-card kpi-accent kpi-mty">
+      <div class="kpi-label">San Pedro · Glow</div>
+      <div class="kpi-value">${fmt(s.mty.fact)}</div>
+      <div class="kpi-sub"><span class="kpi-chg ${s.mty.chg>0?'up':'down'}">${pct(s.mty.chg)}</span> <span class="neutral">${s.mty.citas} citas</span></div>
+    </div>
+    <div class="kpi-card kpi-accent kpi-mcl">
+      <div class="kpi-label">Monclova · Vitapiel</div>
+      <div class="kpi-value">${fmt(s.mcl.fact)}</div>
+      <div class="kpi-sub"><span class="kpi-chg ${s.mcl.chg>0?'up':'down'}">${pct(s.mcl.chg)}</span> <span class="neutral">${s.mcl.citas} citas</span></div>
+    </div>`;
+
+  document.getElementById('suc-split').innerHTML = `
+    <div class="suc-card">
+      <div class="suc-header"><span class="suc-name" style="color:var(--mty)">San Pedro · Glow Medicina Estética</span><span class="suc-badge badge-mty">MTY</span></div>
+      ${sucRow('Facturado',fmtFull(s.mty.fact))}${sucRow('Cobrado',fmtFull(s.mty.cobrado))}${sucRow('Saldo pendiente','<span style="color:var(--amber)">'+fmtFull(s.mty.saldo)+'</span>')}
+      ${sucRow('Ticket promedio',fmtFull(s.mty.ticket))}${sucRow('Ticket inyectables','<span style="color:var(--inj)">$8,469</span>')}${sucRow('Ticket faciales','<span style="color:var(--fac)">$3,347</span>')}
+      ${progRow('Cobrado vs facturado', s.mty.cobrado/s.mty.fact*100, 'var(--mty)')}
+    </div>
+    <div class="suc-card">
+      <div class="suc-header"><span class="suc-name" style="color:var(--mcl)">Monclova · Vitapiel</span><span class="suc-badge badge-mcl">MCL</span></div>
+      ${sucRow('Facturado',fmtFull(s.mcl.fact))}${sucRow('Cobrado',fmtFull(s.mcl.cobrado))}${sucRow('Saldo pendiente','<span style="color:var(--amber)">'+fmtFull(s.mcl.saldo)+'</span>')}
+      ${sucRow('Ticket promedio',fmtFull(s.mcl.ticket))}${sucRow('Ticket inyectables','<span style="color:var(--inj)">$2,223</span>')}${sucRow('Ticket faciales','<span style="color:var(--fac)">$1,309</span>')}
+      ${progRow('Cobrado vs facturado', s.mcl.cobrado/s.mcl.fact*100, 'var(--mcl)')}
+    </div>`;
+
+  // Chart facturación
+  mkChart('chartFact','bar',{
+    labels: LABELS,
+    datasets: [
+      { label:'San Pedro', data: MESES.map(m=>getSuc('Monterrey','Facturado',m)), backgroundColor: C.mty+'bb', borderColor: C.mty, borderWidth:1, borderRadius:3,
+        datalabels: dlBar(v=>v?'$'+(v/1000).toFixed(0)+'K':'', C.mty) },
+      { label:'Monclova', data: MESES.map(m=>getSuc('Monclova','Facturado',m)), backgroundColor: C.mcl+'bb', borderColor: C.mcl, borderWidth:1, borderRadius:3,
+        datalabels: dlBar(v=>v?'$'+(v/1000).toFixed(0)+'K':'', C.mcl) }
+    ]
+  },{
+    plugins:{...chartDefaults.plugins, legend:{display:true,position:'top',labels:{color:C.text,boxWidth:12,font:{size:11}}}, datalabels:{display:true}},
+    scales:{...chartDefaults.scales, y:{...chartDefaults.scales.y, ticks:{...chartDefaults.scales.y.ticks, callback:v=>'$'+(v/1000).toFixed(0)+'K'}}}
+  });
+
+  // Donut pagos
+  const pagos = D.pago_mes.filter(p=>p.YearMonth==='2026-04');
+  const totalPago = pagos.reduce((a,b)=>a+b.Importe,0);
+  const pagoColors = [C.mty, C.inj, C.fac, C.gold];
+  mkChart('chartPago','doughnut',{
+    labels: pagos.map(p=>p['Forma de pago']),
+    datasets:[{data:pagos.map(p=>p.Importe),backgroundColor:pagoColors,borderWidth:0}]
+  },{ plugins:{...chartDefaults.plugins,legend:{display:false}}, cutout:'68%', scales:{} });
+  document.getElementById('pagoLegend').innerHTML = pagos.map((p,i)=>`
+    <div class="pago-row"><div class="pago-dot" style="background:${pagoColors[i]}"></div>
+    <span class="pago-lbl">${p['Forma de pago']}</span>
+    <span class="pago-pct" style="color:${pagoColors[i]}">${(p.Importe/totalPago*100).toFixed(0)}%</span></div>`).join('');
+
+  // Ticket tipo
+  mkChart('chartTicket','line',{
+    labels:LABELS,
+    datasets:[
+      {label:'Inyectables MTY',data:MESES.map(m=>getTicketTipo('Monterrey','Inyectables',m)),borderColor:C.inj,backgroundColor:C.inj+'22',fill:true,tension:.35,pointRadius:4,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(1)+'K':'', C.inj)},
+      {label:'Faciales MTY',data:MESES.map(m=>getTicketTipo('Monterrey','Faciales/Aparatología',m)),borderColor:C.fac,backgroundColor:C.fac+'22',fill:true,tension:.35,pointRadius:4,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(1)+'K':'', C.fac, 8)}
+    ]
+  },{
+    plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:C.text,boxWidth:12,font:{size:11}}},datalabels:{display:true}},
+    scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'$'+(v/1000).toFixed(0)+'K'}}},
+    metaLines:[
+      {value:METAS.ticket_inj_mty, label:`Meta inj $${(METAS.ticket_inj_mty/1000).toFixed(0)}K`, color:'#f97b4f'},
+      {value:METAS.ticket_fac_mty, label:`Meta fac $${(METAS.ticket_fac_mty/1000).toFixed(1)}K`, color:'#a78bfa'},
+    ]
+  });
+
+  // Inasistencias
+  mkChart('chartInasist','line',{
+    labels:LABELS,
+    datasets:[
+      {label:'San Pedro',data:MESES.map(m=>getInasist('Monterrey',m)),borderColor:C.mty,tension:.35,pointRadius:4,fill:false,
+        datalabels: dlLine(v=>v!=null?v+'%':'', C.mty)},
+      {label:'Monclova',data:MESES.map(m=>getInasist('Monclova',m)),borderColor:C.mcl,tension:.35,pointRadius:4,fill:false,borderDash:[5,3],
+        datalabels: dlLine(v=>v!=null?v+'%':'', C.mcl, 8)}
+    ]
+  },{
+    plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:C.text,boxWidth:12,font:{size:11}}},datalabels:{display:true}},
+    scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'},suggestedMax:10}},
+    metaLines:[{value:METAS.inasistencia, label:`Meta máx ${METAS.inasistencia}%`, color:'#f6a623'}]
+  });
+}
+
+function sucRow(lbl, val) {
+  return `<div class="suc-row"><span class="suc-lbl">${lbl}</span><span class="suc-val">${val}</span></div>`;
+}
+function progRow(lbl, pct, color) {
+  return `<div class="prog-wrap"><div class="suc-row"><span class="suc-lbl">${lbl}</span><span class="suc-val">${pct.toFixed(1)}%</span></div><div class="prog"><div class="prog-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div></div>`;
+}
+
+// ══ PÁGINA: TENDENCIA ══
+let currentTrend = 'fact';
+function initTendencia() {
+  renderTrendChart('fact');
+
+  // Ticket tipo MTY
+  mkChart('chartTicketTipo','line',{
+    labels:LABELS,
+    datasets:[
+      {label:'Inyectables',data:MESES.map(m=>getTicketTipo('Monterrey','Inyectables',m)),borderColor:C.inj,tension:.35,pointRadius:4,fill:false,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(1)+'K':'', C.inj)},
+      {label:'Faciales',data:MESES.map(m=>getTicketTipo('Monterrey','Faciales/Aparatología',m)),borderColor:C.fac,tension:.35,pointRadius:4,fill:false,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(1)+'K':'', C.fac, 8)}
+    ]
+  },{
+    plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:C.text,boxWidth:12,font:{size:11}}},datalabels:{display:true}},
+    scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'$'+(v/1000).toFixed(0)+'K'}}},
+    metaLines:[
+      {value:METAS.ticket_inj_mty, label:`Meta inj $${(METAS.ticket_inj_mty/1000).toFixed(0)}K`, color:'#f97b4f'},
+      {value:METAS.ticket_fac_mty, label:`Meta fac $${(METAS.ticket_fac_mty/1000).toFixed(1)}K`, color:'#a78bfa'},
+    ]
+  });
+
+  // Diario heatmap (Mar+Abr MTY)
+  const diario = D.diario.filter(d=>d.Sucursal==='Monterrey').sort((a,b)=>a.Fecha_str.localeCompare(b.Fecha_str));
+  const maxF = Math.max(...diario.map(d=>d.Facturado));
+  const grid = diario.map(d=>{
+    const pct = d.Facturado/maxF;
+    const alpha = 0.15 + pct*0.75;
+    const fechaParts = d.Fecha_str.split('-');
+    const dia = parseInt(fechaParts[2]);
+    const mes = parseInt(fechaParts[1]);
+    return `<div class="diario-cell" style="border:1px solid rgba(79,156,249,${alpha})" title="${d.Fecha_str}: ${fmtFull(d.Facturado)} · ${d.Citas} citas">
+      <div class="diario-date">${dia}/${mes}</div>
+      <div class="diario-fact" style="color:rgba(79,156,249,${0.6+pct*0.4})">${fmt(d.Facturado)}</div>
+      <div class="diario-citas">${d.Citas} citas</div>
+    </div>`;
+  }).join('');
+  document.getElementById('diarioGrid').innerHTML = `<div class="diario-grid">${grid}</div>`;
+}
+
+function renderTrendChart(type) {
+  let datasets = [], yFmt = v => v, metaLines = [];
+  if(type==='fact') {
+    datasets = [
+      {label:'San Pedro',data:MESES.map(m=>getSuc('Monterrey','Facturado',m)),borderColor:C.mty,backgroundColor:C.mty+'18',fill:true,tension:.35,pointRadius:4,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(0)+'K':'', C.mty)},
+      {label:'Monclova',data:MESES.map(m=>getSuc('Monclova','Facturado',m)),borderColor:C.mcl,backgroundColor:C.mcl+'18',fill:true,tension:.35,pointRadius:4,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(0)+'K':'', C.mcl, 8)}
+    ];
+    yFmt = v=>'$'+(v/1000).toFixed(0)+'K';
+  } else if(type==='citas') {
+    datasets = [
+      {label:'San Pedro',data:MESES.map(m=>getSuc('Monterrey','Citas',m)),borderColor:C.mty,tension:.35,pointRadius:4,fill:false,
+        datalabels: dlLine(v=>v||'', C.mty)},
+      {label:'Monclova',data:MESES.map(m=>getSuc('Monclova','Citas',m)),borderColor:C.mcl,tension:.35,pointRadius:4,fill:false,
+        datalabels: dlLine(v=>v||'', C.mcl, 8)}
+    ];
+  } else if(type==='ticket') {
+    datasets = [
+      {label:'San Pedro',data:MESES.map(m=>getSuc('Monterrey','Ticket',m)),borderColor:C.mty,tension:.35,pointRadius:4,fill:false,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(1)+'K':'', C.mty)},
+      {label:'Monclova',data:MESES.map(m=>getSuc('Monclova','Ticket',m)),borderColor:C.mcl,tension:.35,pointRadius:4,fill:false,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(1)+'K':'', C.mcl, 8)}
+    ];
+    yFmt = v=>'$'+(v/1000).toFixed(1)+'K';
+  } else if(type==='nuevos') {
+    datasets = [
+      {label:'Nuevos MTY',data:MESES.map(m=>getNuevos('Monterrey','Nuevos',m)),borderColor:C.gold,backgroundColor:C.gold+'22',fill:true,tension:.35,pointRadius:4,
+        datalabels: dlLine(v=>v||'', C.gold)},
+      {label:'Nuevos MCL',data:MESES.map(m=>getNuevos('Monclova','Nuevos',m)),borderColor:C.green,backgroundColor:C.green+'22',fill:true,tension:.35,pointRadius:4,
+        datalabels: dlLine(v=>v||'', C.green, 8)}
+    ];
+    // Meta % pacientes nuevos sobre total (como referencia visual de pacientes)
+    metaLines = [{value: METAS.pct_nuevos, label:`Meta >${METAS.pct_nuevos} nuevos`, color:'#f5c842'}];
+  }
+  mkChart('chartTrend','line',{labels:LABELS,datasets},{
+    plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:C.text,boxWidth:12,font:{size:11}}},datalabels:{display:true}},
+    scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:yFmt}}},
+    metaLines
+  });
+}
+
+function switchTrend(type, btn) {
+  document.querySelectorAll('#page-tendencia .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTrendChart(type);
+}
+
+// ══ PÁGINA: SUCURSALES ══
+function initSucursales() {
+  mkChart('chartSucFact','bar',{
+    labels:LABELS,
+    datasets:[
+      {label:'San Pedro',data:MESES.map(m=>getSuc('Monterrey','Facturado',m)),backgroundColor:C.mty+'bb',borderColor:C.mty,borderWidth:1,borderRadius:3,
+        datalabels: dlBar(v=>v?'$'+(v/1000).toFixed(0)+'K':'', C.mty)},
+      {label:'Monclova',data:MESES.map(m=>getSuc('Monclova','Facturado',m)),backgroundColor:C.mcl+'bb',borderColor:C.mcl,borderWidth:1,borderRadius:3,
+        datalabels: dlBar(v=>v?'$'+(v/1000).toFixed(0)+'K':'', C.mcl)}
+    ]
+  },{
+    plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:C.text,boxWidth:12,font:{size:11}}},datalabels:{display:true}},
+    scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'$'+(v/1000).toFixed(0)+'K'}}}
+  });
+
+  mkChart('chartSucTicket','line',{
+    labels:LABELS,
+    datasets:[
+      {label:'San Pedro',data:MESES.map(m=>getSuc('Monterrey','Ticket',m)),borderColor:C.mty,tension:.35,pointRadius:4,fill:false,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(1)+'K':'', C.mty)},
+      {label:'Monclova',data:MESES.map(m=>getSuc('Monclova','Ticket',m)),borderColor:C.mcl,tension:.35,pointRadius:4,fill:false,
+        datalabels: dlLine(v=>v?'$'+(v/1000).toFixed(1)+'K':'', C.mcl, 8)}
+    ]
+  },{
+    plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:C.text,boxWidth:12,font:{size:11}}},datalabels:{display:true}},
+    scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>'$'+(v/1000).toFixed(0)+'K'}}}
+  });
+
+  // Tabla
+  const rows = D.monthly_suc.slice().reverse().map(r => {
+    const tasa = getInasist(r.Sucursal, r.YearMonth);
+    const sem = tasa>5?'🔴':tasa>3?'🟡':'🟢';
+    const cobPct = r.Cobrado/r.Facturado*100;
+    return `<tr>
+      <td>${D.labels12[MESES.indexOf(r.YearMonth)]||r.YearMonth}</td>
+      <td><span class="td-badge ${r.Sucursal==='Monterrey'?'b-mty':'b-mcl'}">${r.Sucursal==='Monterrey'?'San Pedro':'Monclova'}</span></td>
+      <td class="td-num">${r.Citas}</td>
+      <td class="td-num">${fmtFull(r.Facturado)}</td>
+      <td class="td-num">${fmtFull(r.Cobrado)}</td>
+      <td class="td-num">${fmtFull(r.Ticket)}</td>
+      <td class="td-num" style="color:${r.Saldo>50000?'var(--amber)':'var(--text)'}">${r.Saldo>0?fmtFull(r.Saldo):'—'}</td>
+      <td>${sem} ${cobPct.toFixed(1)}% cobr.</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tableSucBody').innerHTML = rows;
+}
+
+// ══ PÁGINA: TERAPEUTAS ══
+const TER_COLORS = {'Dra. Maria Angeles Hernandez':'#f05252','Dra. Brenda Paredes':'#a78bfa','Lic. Karina Salas':'#4f9cf9','Lic Lidia Hernandez':'#52d68a','Lic. Stephania Ramirez':'#f97b4f','Lic. Alicia Castañeda Valdez':'#f5c842','Lic. Tania Garcia':'#6ee7b7','Liz Vazquez':'#f472b6'};
+let currentTer = 'Lic. Karina Salas';
+let currentTerChart = 'fact';
+
+function initTerapeutas() {
+  const terapeutas = [...new Set(D.ter_mes.map(t=>t.Terapeuta))].filter(t => !['Jesús Velasco','Cynthia Solis','Vanessa Ramirez','Lic. Tania Garcia','Liz Vazquez','Dra. Selene Hernández'].includes(t));
+  document.getElementById('terSelect').innerHTML = terapeutas.map(t=>`
+    <button class="ter-btn ${t===currentTer?'active':''}" onclick="selectTer('${t}',this)" 
+      style="${t===currentTer?'background:'+( TER_COLORS[t]||C.mty)+';border-color:'+(TER_COLORS[t]||C.mty):''}">
+      ${t.split(' ').slice(-2).join(' ')}
+    </button>`).join('');
+  renderTerPage();
+}
+
+function selectTer(ter, btn) {
+  currentTer = ter;
+  document.querySelectorAll('.ter-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.style.background=''; b.style.borderColor=''; b.style.color='';
+  });
+  btn.classList.add('active');
+  btn.style.background = TER_COLORS[ter]||C.mty;
+  btn.style.borderColor = TER_COLORS[ter]||C.mty;
+  renderTerPage();
+}
+
+function renderTerPage() {
+  const ter = currentTer;
+  const color = TER_COLORS[ter]||C.mty;
+  const data = MESES.map(m=>D.ter_mes.find(x=>x.YearMonth===m&&x.Terapeuta===ter)||{Citas:0,Facturado:0,Pacientes:0,Ticket:0});
+  const totalFact = data.reduce((a,b)=>a+b.Facturado,0);
+  const totalCitas = data.reduce((a,b)=>a+b.Citas,0);
+  const avgTicket = totalCitas>0?Math.round(totalFact/totalCitas):0;
+  const avgCitas = Math.round(totalCitas/12);
+  const tipo = D.ter_mes.find(x=>x.Terapeuta===ter);
+  const tipoLabel = tipo ? (tipo.TipoServicio==='Inyectables'?'💉 Inyectables':'💆 Faciales/Aparat.') : '';
+
+  document.getElementById('terKpis').innerHTML = `
+    <div class="ter-kpi" style="border-top:2px solid ${color}"><div class="ter-kpi-val" style="color:${color}">${fmt(totalFact)}</div><div class="ter-kpi-lbl">Facturado 12 meses</div></div>
+    <div class="ter-kpi"><div class="ter-kpi-val">${totalCitas}</div><div class="ter-kpi-lbl">Citas totales</div></div>
+    <div class="ter-kpi"><div class="ter-kpi-val">${fmtFull(avgTicket)}</div><div class="ter-kpi-lbl">Ticket promedio</div></div>
+    <div class="ter-kpi"><div class="ter-kpi-val">${avgCitas}</div><div class="ter-kpi-lbl">Citas prom/mes · ${tipoLabel}</div></div>`;
+
+  renderTerChart(currentTerChart, color, data);
+
+  // Tabla mensual
+  document.getElementById('terTableTitle').textContent = `Detalle mensual · ${ter}`;
+  document.getElementById('terTableHead').innerHTML = '<tr><th>Mes</th><th class="td-num">Citas</th><th class="td-num">Facturado</th><th class="td-num">Pacientes únicos</th><th class="td-num">Ticket promedio</th><th>Tendencia</th></tr>';
+  const prevFacts = data.map(d=>d.Facturado);
+  document.getElementById('terTableBody').innerHTML = MESES.map((m,i)=>{
+    const d = data[i];
+    if(!d.Citas) return `<tr><td>${LABELS[i]}</td><td class="td-num" colspan="4" style="color:var(--text3)">Sin actividad</td><td></td></tr>`;
+    const prev = i>0?prevFacts[i-1]:null;
+    const chgV = prev&&prev>0?((d.Facturado-prev)/prev*100).toFixed(1):null;
+    const chgHtml = chgV?`<span class="${parseFloat(chgV)>0?'up':'down'}" style="font-size:11px">${parseFloat(chgV)>0?'↑':'↓'} ${Math.abs(chgV)}%</span>`:'—';
+    return `<tr><td style="font-weight:500">${LABELS[i]}</td><td class="td-num">${d.Citas}</td><td class="td-num">${fmtFull(d.Facturado)}</td><td class="td-num">${d.Pacientes||'—'}</td><td class="td-num">${d.Ticket?fmtFull(d.Ticket):'—'}</td><td>${chgHtml}</td></tr>`;
+  }).join('');
+}
+
+function renderTerChart(type, color, data) {
+  color = color || (TER_COLORS[currentTer]||C.mty);
+  data = data || MESES.map(m=>D.ter_mes.find(x=>x.YearMonth===m&&x.Terapeuta===currentTer)||{Citas:0,Facturado:0,Pacientes:0,Ticket:0});
+  let vals = [], yFmt = v=>v, label = '', dlFmt;
+  if(type==='fact') {
+    vals=data.map(d=>d.Facturado); yFmt=v=>'$'+(v/1000).toFixed(0)+'K'; label='Facturado';
+    dlFmt = v=>v?'$'+(v/1000).toFixed(0)+'K':'';
+  } else if(type==='citas') {
+    vals=data.map(d=>d.Citas); label='Citas';
+    dlFmt = v=>v||'';
+  } else if(type==='ticket') {
+    vals=data.map(d=>d.Ticket||null); yFmt=v=>'$'+(v/1000).toFixed(1)+'K'; label='Ticket';
+    dlFmt = v=>v?'$'+(v/1000).toFixed(1)+'K':'';
+  } else if(type==='pacientes') {
+    vals=data.map(d=>d.Pacientes); label='Pacientes únicos';
+    dlFmt = v=>v||'';
+  }
+  mkChart('chartTer','bar',{
+    labels:LABELS,
+    datasets:[{label,data:vals,backgroundColor:color+'99',borderColor:color,borderWidth:1,borderRadius:4,
+      datalabels: dlBar(dlFmt, color)}]
+  },{
+    plugins:{...chartDefaults.plugins,datalabels:{display:true}},
+    scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:yFmt}}}
+  });
+}
+
+function switchTerChart(type, btn) {
+  currentTerChart = type;
+  document.querySelectorAll('#page-terapeutas .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTerChart(type);
+}
+
+// ══ PÁGINA: CLIENTES ══
+function initClientes() {
+  const top10 = D.top.slice(0,10);
+  mkChart('chartTop','bar',{
+    labels: top10.map(c=>c.Cliente.split(' ').slice(0,2).join(' ')),
+    datasets:[{label:'Total invertido',data:top10.map(c=>c.Total),backgroundColor:C.gold+'99',borderColor:C.gold,borderWidth:1,borderRadius:4}]
+  },{
+    indexAxis:'y',
+    plugins:{...chartDefaults.plugins},
+    scales:{x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,callback:v=>'$'+(v/1000).toFixed(0)+'K'}},y:{...chartDefaults.scales.y}}
+  });
+
+  mkChart('chartTopVisitas','bar',{
+    labels: D.top.slice(0,15).map(c=>c.Cliente.split(' ')[0]),
+    datasets:[{label:'Visitas',data:D.top.slice(0,15).map(c=>c.Visitas),backgroundColor:C.mty+'88',borderColor:C.mty,borderWidth:1,borderRadius:3}]
+  },{
+    indexAxis:'y',
+    plugins:{...chartDefaults.plugins},
+    scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,font:{size:10}}}}
+  });
+
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('tableTop').innerHTML = D.top.map((c,i)=>`<tr>
+    <td class="rank">${medals[i]||i+1}</td>
+    <td style="font-weight:${i<3?600:400}">${c.Cliente}</td>
+    <td><span class="td-badge ${c.Sucursal==='Monterrey'?'b-mty':'b-mcl'}">${c.Sucursal==='Monterrey'?'MTY':'MCL'}</span></td>
+    <td class="td-num">${c.Visitas}</td>
+    <td class="td-num" style="font-weight:600;color:${i<5?C.gold:'inherit'}">${fmtFull(c.Total)}</td>
+    <td class="td-num">${fmtFull(c.Total/c.Visitas)}</td>
+    <td class="td-num" style="color:var(--text2)">${c.UltimaVisita}</td>
+  </tr>`).join('');
+}
+
+// ══ PÁGINA: RETENCIÓN ══
+function initRetencion() {
+  const lm = MESES[MESES.length-1];
+  const mtyNv = D.nuevos.find(x=>x.YearMonth===lm&&x.Sucursal==='Monterrey')||{};
+  const mclNv = D.nuevos.find(x=>x.YearMonth===lm&&x.Sucursal==='Monclova')||{};
+  const avgIaMty = D.inasist.filter(x=>x.Sucursal==='Monterrey'&&MESES.includes(x.YearMonth)).reduce((a,b)=>a+b.Tasa,0)/12;
+  const avgIaMcl = D.inasist.filter(x=>x.Sucursal==='Monclova'&&MESES.includes(x.YearMonth)).reduce((a,b)=>a+b.Tasa,0)/12;
+
+  document.getElementById('kpiRetencion').innerHTML = `
+    <div class="kpi-card kpi-accent kpi-mty">
+      <div class="kpi-label">Nuevos Abr · San Pedro</div>
+      <div class="kpi-value">${mtyNv.Nuevos||0}</div>
+      <div class="kpi-sub neutral">${mtyNv.Pct_Nuevos||0}% del total de citas</div>
+    </div>
+    <div class="kpi-card kpi-accent kpi-mcl">
+      <div class="kpi-label">Nuevos Abr · Monclova</div>
+      <div class="kpi-value">${mclNv.Nuevos||0}</div>
+      <div class="kpi-sub neutral">${mclNv.Pct_Nuevos||0}% del total de citas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Inasistencia prom. 12m</div>
+      <div class="kpi-value" style="font-size:22px">${avgIaMty.toFixed(1)}% / ${avgIaMcl.toFixed(1)}%</div>
+      <div class="kpi-sub neutral">San Pedro / Monclova</div>
+    </div>`;
+
+  ['Monterrey','Monclova'].forEach((suc,idx)=>{
+    const id = idx===0?'chartNuevosMty':'chartNuevosMcl';
+    mkChart(id,'bar',{
+      labels:LABELS,
+      datasets:[
+        {label:'Recurrentes',data:MESES.map(m=>getNuevos(suc,'Recurrentes',m)),backgroundColor:idx===0?C.mty+'77':C.mcl+'77',borderColor:idx===0?C.mty:C.mcl,borderWidth:1,borderRadius:3,stack:'a',
+          datalabels:{display:false}},
+        {label:'Nuevos',data:MESES.map(m=>getNuevos(suc,'Nuevos',m)),backgroundColor:C.gold+'99',borderColor:C.gold,borderWidth:1,borderRadius:3,stack:'a',
+          datalabels: dlBar(v=>v||'', C.gold)}
+      ]
+    },{
+      plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:C.text,boxWidth:12,font:{size:11}}},datalabels:{display:true}},
+      scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,stacked:true},y:{...chartDefaults.scales.y,stacked:true}}
+    });
+  });
+
+  // Inasistencia tendencia
+  mkChart('chartInasistTrend','line',{
+    labels:LABELS,
+    datasets:[
+      {label:'San Pedro',data:MESES.map(m=>getInasist('Monterrey',m)),borderColor:C.mty,
+        pointBackgroundColor:MESES.map(m=>{const t=getInasist('Monterrey',m);return t>5?C.red:t>3?C.amber:C.green;}),
+        tension:.35,pointRadius:5,fill:false,
+        datalabels: dlLine(v=>v!=null?v+'%':'', C.mty)},
+      {label:'Monclova',data:MESES.map(m=>getInasist('Monclova',m)),borderColor:C.mcl,
+        pointBackgroundColor:MESES.map(m=>{const t=getInasist('Monclova',m);return t>5?C.red:t>3?C.amber:C.green;}),
+        tension:.35,pointRadius:5,fill:false,borderDash:[4,3],
+        datalabels: dlLine(v=>v!=null?v+'%':'', C.mcl, 8)}
+    ]
+  },{
+    plugins:{...chartDefaults.plugins,legend:{display:true,position:'top',labels:{color:C.text,boxWidth:12,font:{size:11}}},datalabels:{display:true}},
+    scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'},suggestedMax:8,suggestedMin:0}},
+    metaLines:[{value:METAS.inasistencia, label:`Meta máx ${METAS.inasistencia}%`, color:'#f6a623'}]
+  });
+}
+
+// ══ NAVEGACIÓN ══
+const pageInits = { resumen: initResumen, tendencia: initTendencia, sucursales: initSucursales, terapeutas: initTerapeutas, clientes: initClientes, retencion: initRetencion };
+const initialized = {};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelector(`.nav-item[onclick="showPage('${name}')"]`).classList.add('active');
+  if(!initialized[name]) { pageInits[name]&&pageInits[name](); initialized[name]=true; }
+}
+
+// Init
+Chart.register(ChartDataLabels);
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+initResumen();
+initialized['resumen'] = true;
+</script>
+</body>
+</html>
